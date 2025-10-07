@@ -5,7 +5,11 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Only use adapter in production/runtime, not during build
+  ...(process.env.NODE_ENV === 'production' && process.env.DATABASE_URL ? {
+    adapter: PrismaAdapter(prisma)
+  } : {}),
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'credentials',

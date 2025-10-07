@@ -1,10 +1,7 @@
 {
-  "build": {
-    "env": {
-      "NEXTAUTH_URL": "https://evertory.com"
+  "functions": {
+    "app/api/auth/[...nextauth]/route.ts": {
+      "maxDuration": 30
     }
-  },
-  "env": {
-    "NEXTAUTH_URL": "https://evertory.com"
   }
 }
