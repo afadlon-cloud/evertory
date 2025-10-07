@@ -6,6 +6,9 @@ const nextConfig = {
   images: {
     domains: ['res.cloudinary.com', 'images.unsplash.com'],
   },
+  env: {
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'build-time-secret',
+  },
   async rewrites() {
     return [
       {
