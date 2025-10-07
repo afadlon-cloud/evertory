@@ -1,0 +1,10 @@
+{
+  "build": {
+    "env": {
+      "NEXTAUTH_URL": "https://evertory.com"
+    }
+  },
+  "env": {
+    "NEXTAUTH_URL": "https://evertory.com"
+  }
+}
