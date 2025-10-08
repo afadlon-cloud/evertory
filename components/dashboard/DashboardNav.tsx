@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+// Temporarily disabled for deployment
+// import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -15,7 +16,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 export function DashboardNav() {
-  const { data: session } = useSession();
+  // Temporarily disabled for deployment
+  // const { data: session } = useSession();
+  const session = { user: { name: 'Demo User', email: 'demo@evertory.com' } };
   const pathname = usePathname();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -112,7 +115,7 @@ export function DashboardNav() {
                     </div>
                   </Link>
                   <button
-                    onClick={() => signOut()}
+                    onClick={() => {/* signOut() */}}
                     className="block w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
                   >
                     <div className="flex items-center space-x-2">
