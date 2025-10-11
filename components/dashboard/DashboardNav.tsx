@@ -18,7 +18,7 @@ import {
 export function DashboardNav() {
   // Temporarily disabled for deployment
   // const { data: session } = useSession();
-  const session = { user: { name: 'Demo User', email: 'demo@evertory.com' } };
+  const session = { user: { name: 'Demo User', email: 'demo@evertory.com', image: null } };
   const pathname = usePathname();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
