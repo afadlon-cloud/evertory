@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { HeartIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
-export default function SignUpPage() {
+function SignUpForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -232,5 +232,13 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50 flex items-center justify-center">Loading...</div>}>
+      <SignUpForm />
+    </Suspense>
   );
 }
