@@ -16,31 +16,39 @@ export async function GET(
       searchDomain = `${domain}.evertory.com`;
     }
 
-    const story = await prisma.story.findFirst({
-      where: {
-        domain: searchDomain,
-        isPublic: true,
-      },
-      include: {
-        chapters: {
-          include: {
-            media: {
-              orderBy: { order: 'asc' },
+    // Build-safe database access
+    let story;
+    try {
+      story = await prisma.story.findFirst({
+        where: {
+          domain: searchDomain,
+          isPublic: true,
+        },
+        include: {
+          chapters: {
+            include: {
+              media: {
+                orderBy: { order: 'asc' },
+              },
+            },
+            orderBy: { order: 'asc' },
+          },
+          media: {
+            orderBy: { order: 'asc' },
+          },
+          settings: true,
+          user: {
+            select: {
+              name: true,
             },
           },
-          orderBy: { order: 'asc' },
         },
-        media: {
-          orderBy: { order: 'asc' },
-        },
-        settings: true,
-        user: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
+      });
+    } catch (dbError) {
+      // If database is not available (during build), return not found
+      console.log('Database not available during build');
+      return NextResponse.json({ error: 'Story not found' }, { status: 404 });
+    }
 
     if (!story) {
       return NextResponse.json({ error: 'Story not found' }, { status: 404 });
