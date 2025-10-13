@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-// Temporarily disabled for deployment
-// import { useSession, signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -16,9 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export function DashboardNav() {
-  // Temporarily disabled for deployment
-  // const { data: session } = useSession();
-  const session = { user: { name: 'Demo User', email: 'demo@evertory.com', image: null } };
+  const { data: session } = useSession();
   const pathname = usePathname();
   const [showUserMenu, setShowUserMenu] = useState(false);
 

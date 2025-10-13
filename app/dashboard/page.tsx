@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-// Temporarily disabled for deployment
-// import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
@@ -30,9 +29,7 @@ interface Story {
 }
 
 export default function DashboardPage() {
-  // Temporarily disabled for deployment
-  // const { data: session } = useSession();
-  const session = { user: { name: 'Demo User', email: 'demo@evertory.com' } };
+  const { data: session } = useSession();
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

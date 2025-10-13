@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-// Temporarily disabled for deployment
-// import { signIn } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { HeartIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
@@ -24,18 +23,16 @@ function SignInForm() {
     setError('');
 
     try {
-      // Temporarily disabled for deployment - simulate successful login
-      // const result = await signIn('credentials', {
-      //   email,
-      //   password,
-      //   redirect: false,
-      // });
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
 
-      // Simulate successful login
-      if (email === 'demo@evertory.com' && password === 'demo') {
-        router.push(callbackUrl);
+      if (result?.error) {
+        setError('Invalid email or password');
       } else {
-        setError('Use demo@evertory.com / demo for demo access');
+        router.push(callbackUrl);
       }
     } catch (error) {
       setError('An error occurred. Please try again.');

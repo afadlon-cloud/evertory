@@ -6,7 +6,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'PhotoLooks - Tell Your Story',
+  title: 'Evertory - Tell Your Story',
   description: 'Create beautiful personal websites to tell your life story, document family history, and share precious memories.',
   keywords: 'personal website, life story, family history, photo sharing, digital memories',
 };

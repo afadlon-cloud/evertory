@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-// Temporarily disabled auth for deployment
-// import { getServerSession } from 'next-auth/next';
-// import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import slugify from 'slugify';
 
 export async function GET(request: NextRequest) {
   try {
-    // Temporarily disabled auth for deployment
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user?.id) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const session = await getServerSession(authOptions);
     
-    // Mock user ID for deployment
-    const userId = 'demo-user-id';
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const stories = await prisma.story.findMany({
       where: {
-        userId: userId,
+        userId: session.user.id,
       },
       include: {
         _count: {
@@ -45,14 +41,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Temporarily disabled auth for deployment
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user?.id) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const session = await getServerSession(authOptions);
     
-    // Mock user ID for deployment
-    const userId = 'demo-user-id';
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { title, subtitle, description, template = 'timeline' } = await request.json();
 
@@ -85,7 +78,7 @@ export async function POST(request: NextRequest) {
         slug,
         domain,
         template,
-        userId: userId,
+        userId: session.user.id,
       },
       include: {
         _count: {
