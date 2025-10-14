@@ -1,35 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-// Temporarily disabled auth for deployment
-// import { getServerSession } from 'next-auth/next';
-// import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import cloudinary from '@/lib/cloudinary';
 
-// Mock upload - In production, you'd integrate with Cloudinary, AWS S3, etc.
 export async function POST(request: NextRequest) {
   try {
-    // Temporarily disabled auth for deployment
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user?.id) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const session = await getServerSession(authOptions);
     
-    // Mock user ID for deployment
-    const userId = 'demo-user-id';
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const storyId = formData.get('storyId') as string;
     const chapterId = formData.get('chapterId') as string | null;
-
-    if (!file || !storyId) {
-      return NextResponse.json({ error: 'Missing file or storyId' }, { status: 400 });
+    
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Verify story ownership
+    if (!storyId) {
+      return NextResponse.json({ error: 'Story ID is required' }, { status: 400 });
+    }
+
+    // Verify story belongs to user
     const story = await prisma.story.findFirst({
       where: {
         id: storyId,
-        userId: userId,
+        userId: session.user.id,
       },
     });
 
@@ -37,40 +37,68 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Story not found' }, { status: 404 });
     }
 
-    // In a real implementation, you would:
-    // 1. Upload file to cloud storage (Cloudinary, S3, etc.)
-    // 2. Generate thumbnails for images
-    // 3. Process videos for web optimization
-    // 4. Store the URLs in the database
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    // For now, we'll create a mock URL
-    const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-    const mockUrl = `https://images.unsplash.com/photo-${Date.now()}?w=800&h=600&fit=crop`;
-    const mockThumbnailUrl = `https://images.unsplash.com/photo-${Date.now()}?w=400&h=300&fit=crop`;
+    // Upload to Cloudinary
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'auto',
+          folder: `evertory/${session.user.id}/${storyId}`,
+          public_id: `${Date.now()}-${file.name.replace(/\.[^/.]+$/, "")}`,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(buffer);
+    });
+
+    const result = uploadResult as any;
 
     // Get the next order number
     const lastMedia = await prisma.media.findFirst({
-      where: chapterId ? { chapterId } : { storyId },
+      where: {
+        storyId,
+        chapterId: chapterId || null,
+      },
       orderBy: { order: 'desc' },
     });
 
+    const nextOrder = (lastMedia?.order || 0) + 1;
+
+    // Save to database
     const media = await prisma.media.create({
       data: {
-        type: fileType,
-        url: mockUrl,
-        thumbnailUrl: fileType === 'image' ? mockThumbnailUrl : undefined,
-        title: file.name,
-        order: (lastMedia?.order ?? -1) + 1,
-        storyId: chapterId ? null : storyId,
+        type: result.resource_type === 'video' ? 'VIDEO' : 'IMAGE',
+        url: result.secure_url,
+        publicId: result.public_id,
+        filename: file.name,
+        size: file.size,
+        order: nextOrder,
+        storyId,
         chapterId: chapterId || null,
       },
     });
 
-    return NextResponse.json(media);
+    return NextResponse.json({
+      success: true,
+      media: {
+        id: media.id,
+        type: media.type,
+        url: media.url,
+        filename: media.filename,
+        size: media.size,
+        order: media.order,
+      },
+    });
+
   } catch (error) {
-    console.error('Error uploading file:', error);
+    console.error('Upload error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Upload failed' },
       { status: 500 }
     );
   }

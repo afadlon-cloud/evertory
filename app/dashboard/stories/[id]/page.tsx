@@ -17,7 +17,7 @@ import {
   TrashIcon
 } from '@heroicons/react/24/outline';
 import { StoryEditor } from '@/components/editor/StoryEditor';
-import { MediaUpload } from '@/components/media/MediaUpload';
+import { ImageUpload } from '@/components/upload/ImageUpload';
 
 interface Story {
   id: string;
@@ -332,12 +332,15 @@ export default function StoryEditPage() {
               {activeTab === 'media' && (
                 <div>
                   <h3 className="font-semibold text-neutral-800 mb-4">Media Library</h3>
-                  <MediaUpload storyId={story.id} onUpload={(media) => {
-                    setStory(prev => prev ? {
-                      ...prev,
-                      media: [...prev.media, media]
-                    } : null);
-                  }} />
+                  <ImageUpload 
+                    storyId={story.id} 
+                    onUploadComplete={(media) => {
+                      setStory(prev => prev ? {
+                        ...prev,
+                        media: [...prev.media, media]
+                      } : null);
+                    }} 
+                  />
                 </div>
               )}
 
