@@ -74,8 +74,7 @@ export async function POST(request: NextRequest) {
       data: {
         type: result.resource_type === 'video' ? 'VIDEO' : 'IMAGE',
         url: result.secure_url,
-        filename: file.name,
-        size: file.size,
+        title: file.name, // Store filename as title
         order: nextOrder,
         storyId,
         chapterId: chapterId || null,
@@ -88,8 +87,7 @@ export async function POST(request: NextRequest) {
         id: media.id,
         type: media.type,
         url: media.url,
-        filename: media.filename,
-        size: media.size,
+        title: media.title,
         order: media.order,
       },
     });
