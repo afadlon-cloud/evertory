@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-// Temporarily disabled auth for deployment
-// import { getServerSession } from 'next-auth/next';
-// import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
@@ -9,19 +8,16 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Temporarily disabled auth for deployment
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user?.id) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const session = await getServerSession(authOptions);
     
-    // Mock user ID for deployment
-    const userId = 'demo-user-id';
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const story = await prisma.story.findFirst({
       where: {
         id: params.id,
-        userId: userId,
+        userId: session.user.id,
       },
       include: {
         chapters: {
@@ -58,14 +54,11 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Temporarily disabled auth for deployment
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user?.id) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const session = await getServerSession(authOptions);
     
-    // Mock user ID for deployment
-    const userId = 'demo-user-id';
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const data = await request.json();
 
@@ -73,7 +66,7 @@ export async function PATCH(
     const story = await prisma.story.findFirst({
       where: {
         id: params.id,
-        userId: userId,
+        userId: session.user.id,
       },
     });
 

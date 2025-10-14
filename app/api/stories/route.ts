@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(story);
+    return NextResponse.json({ story });
   } catch (error) {
     console.error('Error creating story:', error);
     return NextResponse.json(

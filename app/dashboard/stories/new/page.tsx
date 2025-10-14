@@ -32,12 +32,15 @@ export default function NewStoryPage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Story created:', data); // Debug log
         router.push(`/dashboard/stories/${data.story.id}`);
       } else {
         const errorData = await response.json();
+        console.error('API Error:', errorData); // Debug log
         setError(errorData.error || 'Failed to create story');
       }
     } catch (error) {
+      console.error('Catch Error:', error); // Debug log
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

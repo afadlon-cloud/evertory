@@ -44,6 +44,7 @@ async function main() {
     console.log('\n📚 Stories:', stories.length);
     stories.forEach(story => {
       console.log(`  - "${story.title}" by ${story.user.name} (${story.isPublic ? 'Public' : 'Private'})`);
+      console.log(`    ID: ${story.id}`);
       console.log(`    Domain: ${story.domain}`);
     });
     
