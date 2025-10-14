@@ -77,9 +77,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Story not found' }, { status: 404 });
     }
 
-    // Convert date if provided
-    if (data.date) {
+    // Convert date if provided and not empty
+    if (data.date && data.date.trim() !== '') {
       data.date = new Date(data.date);
+    } else if (data.date === '') {
+      // Remove empty date field
+      delete data.date;
     }
 
     const chapter = await prisma.chapter.update({

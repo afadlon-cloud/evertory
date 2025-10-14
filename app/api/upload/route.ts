@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
       data: {
         type: result.resource_type === 'video' ? 'VIDEO' : 'IMAGE',
         url: result.secure_url,
-        publicId: result.public_id,
         filename: file.name,
         size: file.size,
         order: nextOrder,
