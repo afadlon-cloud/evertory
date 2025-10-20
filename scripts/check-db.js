@@ -50,6 +50,27 @@ async function main() {
     
     console.log('\n✅ Database exploration complete!');
     
+    // Check media
+    const media = await prisma.media.findMany({
+      select: {
+        id: true,
+        type: true,
+        url: true,
+        title: true,
+        story: {
+          select: {
+            title: true
+          }
+        }
+      }
+    });
+    
+    console.log('\n📸 Media:', media.length);
+    media.forEach(item => {
+      console.log(`  - ${item.title} (${item.type}) in "${item.story?.title}"`);
+      console.log(`    URL: ${item.url.substring(0, 50)}...`);
+    });
+    
   } catch (error) {
     console.error('❌ Error:', error.message);
   } finally {

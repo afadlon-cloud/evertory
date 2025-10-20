@@ -10,8 +10,14 @@ interface Story {
   description?: string;
   template: string;
   chapters: Chapter[];
-  media: Media[];
+  mediaReferences: MediaReference[];
   settings: StorySettings;
+}
+
+interface MediaReference {
+  id: string;
+  order: number;
+  media: Media;
 }
 
 interface Chapter {
@@ -20,7 +26,7 @@ interface Chapter {
   content?: string;
   date?: string;
   order: number;
-  media: Media[];
+  mediaReferences: MediaReference[];
 }
 
 interface Media {
@@ -30,7 +36,6 @@ interface Media {
   thumbnailUrl?: string;
   title?: string;
   description?: string;
-  order: number;
 }
 
 interface StorySettings {
@@ -85,34 +90,34 @@ export function TimelineTemplate({ story }: TimelineTemplateProps) {
 
               {/* Chapter Title */}
               <h2 className={`text-3xl font-bold text-neutral-800 mb-6 ${
-                story.settings.fontFamily === 'serif' ? 'font-serif' : ''
+                story.settings?.fontFamily === 'serif' ? 'font-serif' : ''
               }`}>
                 {chapter.title}
               </h2>
 
               {/* Chapter Media */}
-              {chapter.media.length > 0 && (
+              {chapter.mediaReferences.length > 0 && (
                 <div className="mb-8">
-                  {chapter.media.length === 1 ? (
+                  {chapter.mediaReferences.length === 1 ? (
                     <img
-                      src={chapter.media[0].url}
-                      alt={chapter.media[0].title || chapter.title}
+                      src={chapter.mediaReferences[0].media.url}
+                      alt={chapter.mediaReferences[0].media.title || chapter.title}
                       className="w-full h-96 object-cover rounded-xl shadow-lg"
                     />
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
-                      {chapter.media.slice(0, 4).map((media) => (
+                      {chapter.mediaReferences.slice(0, 4).map((ref) => (
                         <img
-                          key={media.id}
-                          src={media.thumbnailUrl || media.url}
-                          alt={media.title || ''}
+                          key={ref.id}
+                          src={ref.media.thumbnailUrl || ref.media.url}
+                          alt={ref.media.title || ''}
                           className="w-full h-48 object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
                         />
                       ))}
-                      {chapter.media.length > 4 && (
+                      {chapter.mediaReferences.length > 4 && (
                         <div className="relative">
                           <img
-                            src={chapter.media[4].thumbnailUrl || chapter.media[4].url}
+                            src={chapter.mediaReferences[4].media.thumbnailUrl || chapter.mediaReferences[4].media.url}
                             alt=""
                             className="w-full h-48 object-cover rounded-lg shadow-md"
                           />
@@ -120,7 +125,7 @@ export function TimelineTemplate({ story }: TimelineTemplateProps) {
                             <div className="text-white text-center">
                               <PhotoIcon className="h-8 w-8 mx-auto mb-2" />
                               <span className="text-lg font-semibold">
-                                +{chapter.media.length - 4} more
+                                +{chapter.mediaReferences.length - 4} more
                               </span>
                             </div>
                           </div>
@@ -141,6 +146,7 @@ export function TimelineTemplate({ story }: TimelineTemplateProps) {
             </div>
           </motion.div>
         ))}
+
 
         {/* End of Timeline */}
         <div className="relative">

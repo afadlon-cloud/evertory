@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { canUseTemplate } from '@/lib/tiers';
 import slugify from 'slugify';
+import { ensureUserDomain } from '@/lib/domain-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             chapters: true,
-            media: true,
+            mediaReferences: true,
           },
         },
       },
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(stories);
+    return NextResponse.json({ stories });
   } catch (error) {
     console.error('Error fetching stories:', error);
     return NextResponse.json(
@@ -56,19 +58,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate slug and domain
+    // Check user tier and template restrictions
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { tier: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+      // Check if user can use the selected template
+      if (!canUseTemplate(user.tier, template)) {
+        return NextResponse.json({
+          error: 'This template requires a Basic plan or higher. Please upgrade to unlock Gallery and Blog templates.',
+          requiredTier: 'basic'
+        }, { status: 403 });
+      }
+
+    // Generate slug (unique within user's stories)
     const baseSlug = slugify(title, { lower: true, strict: true });
     let slug = baseSlug;
     let counter = 1;
 
-    // Ensure unique slug
-    while (await prisma.story.findUnique({ where: { slug } })) {
+    // Ensure unique slug within user's stories
+    while (await prisma.story.findFirst({ 
+      where: { 
+        slug, 
+        userId: session.user.id 
+      } 
+    })) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
 
-    // Generate domain
-    const domain = `${slug}.evertory.com`;
+    // Get or create user's personal domain
+    const userDomain = await ensureUserDomain(session.user.id);
 
     const story = await prisma.story.create({
       data: {
@@ -76,7 +101,7 @@ export async function POST(request: NextRequest) {
         subtitle,
         description,
         slug,
-        domain,
+        domain: userDomain, // Use user's personal domain
         template,
         userId: session.user.id,
       },
@@ -84,7 +109,7 @@ export async function POST(request: NextRequest) {
         _count: {
           select: {
             chapters: true,
-            media: true,
+            mediaReferences: true,
           },
         },
       },

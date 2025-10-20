@@ -16,11 +16,19 @@ model User {
   name          String?
   password      String
   image         String?
+  domain        String?   @unique  // User's personal domain (e.g., fadlon-family.evertory.com)
+  tier          String    @default("free")  // free, basic, pro, premium
+  photoCount    Int       @default(0)  // Current number of photos uploaded
+  photoLimit    Int       @default(20)  // Photo limit based on tier
+  subscriptionId String?  // Stripe subscription ID
+  subscriptionStatus String?  // active, canceled, past_due, etc.
+  subscriptionEndsAt DateTime?  // When subscription expires
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
   // Relations
   stories       Story[]
+  media         Media[]
   accounts      Account[]
   sessions      Session[]
 }
@@ -57,10 +65,11 @@ model Story {
   title       String
   subtitle    String?
   description String?
-  slug        String   @unique
-  domain      String   @unique
+  slug        String
+  domain      String   // Removed @unique - multiple stories can share same domain
   template    String   @default("timeline")
   isPublic    Boolean  @default(true)
+  coverPhoto  String?  // URL to the cover photo
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -70,10 +79,13 @@ model Story {
   
   // Story content
   chapters    Chapter[]
-  media       Media[]
+  mediaReferences MediaReference[]
   
   // Customization
   settings    StorySettings?
+  
+  // Ensure slug is unique per user
+  @@unique([userId, slug])
 }
 
 model StorySettings {
@@ -103,8 +115,8 @@ model Chapter {
   storyId     String
   story       Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
   
-  // Chapter media
-  media       Media[]
+  // Chapter media references
+  mediaReferences MediaReference[]
   
   @@unique([storyId, order])
 }
@@ -116,14 +128,33 @@ model Media {
   thumbnailUrl String?
   title       String?
   description String?
-  order       Int       @default(0)
   createdAt   DateTime  @default(now())
   
-  // Relations
-  storyId     String?
-  story       Story?    @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  chapterId   String?
-  chapter     Chapter?  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  // Relations - Media belongs to user only (gallery)
+  userId      String    // Owner of the media
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // References to this media from stories/chapters
+  references  MediaReference[]
+}
+
+model MediaReference {
+  id        String   @id @default(cuid())
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  // The media being referenced
+  mediaId   String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  
+  // Where it's being referenced (story and/or chapter)
+  storyId   String?
+  story     Story?   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  chapterId String?
+  chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  
+  // Ensure we don't have duplicate references
+  @@unique([mediaId, storyId, chapterId])
 }
 
 model Comment {

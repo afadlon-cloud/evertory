@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { generateUserDomain } from '@/lib/domain-utils';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password, preferredDomain } = await request.json();
 
     // Validate input
     if (!name || !email || !password) {
@@ -29,12 +30,17 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Generate domain
+    const domainToUse = preferredDomain || name || email.split('@')[0];
+    const userDomain = await generateUserDomain(domainToUse);
+
     // Create user
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
+        domain: userDomain,
       }
     });
 

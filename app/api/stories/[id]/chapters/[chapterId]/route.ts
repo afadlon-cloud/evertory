@@ -32,10 +32,15 @@ export async function GET(
         storyId: params.id,
       },
       include: {
-        media: {
-          orderBy: { order: 'asc' },
-        },
-      },
+        mediaReferences: {
+          include: {
+            media: true
+          },
+          orderBy: {
+            order: 'asc'
+          }
+        }
+      } as any,
     });
 
     if (!chapter) {
@@ -89,15 +94,70 @@ export async function PATCH(
       where: { id: params.chapterId },
       data,
       include: {
-        media: {
-          orderBy: { order: 'asc' },
-        },
-      },
+        mediaReferences: {
+          include: {
+            media: true
+          },
+          orderBy: {
+            order: 'asc'
+          }
+        }
+      } as any,
     });
 
     return NextResponse.json(chapter);
   } catch (error) {
     console.error('Error updating chapter:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string; chapterId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify story ownership
+    const story = await prisma.story.findFirst({
+      where: {
+        id: params.id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!story) {
+      return NextResponse.json({ error: 'Story not found' }, { status: 404 });
+    }
+
+    // Verify chapter exists and belongs to the story
+    const chapter = await prisma.chapter.findFirst({
+      where: {
+        id: params.chapterId,
+        storyId: params.id,
+      },
+    });
+
+    if (!chapter) {
+      return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
+    }
+
+    // Delete the chapter (this will cascade delete MediaReferences due to onDelete: Cascade)
+    await prisma.chapter.delete({
+      where: { id: params.chapterId },
+    });
+
+    return NextResponse.json({ message: 'Chapter deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting chapter:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

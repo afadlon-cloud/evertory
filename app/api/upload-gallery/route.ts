@@ -13,31 +13,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const storyId = formData.get('storyId') as string;
-    const chapterId = formData.get('chapterId') as string | null;
-    
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-    }
-
-    if (!storyId) {
-      return NextResponse.json({ error: 'Story ID is required' }, { status: 400 });
-    }
-
-    // Verify story belongs to user
-    const story = await prisma.story.findFirst({
-      where: {
-        id: storyId,
-        userId: session.user.id,
-      },
-    });
-
-    if (!story) {
-      return NextResponse.json({ error: 'Story not found' }, { status: 404 });
-    }
-
     // Check user's tier and photo limits
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -57,16 +32,23 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary (in user's general gallery folder)
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
           resource_type: 'auto',
-          folder: `evertory/${session.user.id}/${storyId}`,
+          folder: `evertory/${session.user.id}/gallery`,
           public_id: `${Date.now()}-${file.name.replace(/\.[^/.]+$/, "")}`,
         },
         (error, result) => {
@@ -78,24 +60,15 @@ export async function POST(request: NextRequest) {
 
     const result = uploadResult as any;
 
-    // First create the media record in the gallery
+    // Save to database as gallery upload (no story/chapter association)
     const media = await prisma.media.create({
       data: {
         type: result.resource_type === 'video' ? 'video' : 'image',
         url: result.secure_url,
         title: file.name, // Store filename as title
         userId: session.user.id,
+        // Gallery uploads are not associated with stories/chapters
       } as any,
-    });
-
-    // Then create a reference to link it to the story/chapter
-    const reference = await (prisma as any).mediaReference.create({
-      data: {
-        mediaId: media.id,
-        storyId: storyId,
-        chapterId: chapterId || null,
-        order: 0, // Default order, can be updated later
-      },
     });
 
     // Update user's photo count by counting all media
@@ -115,11 +88,12 @@ export async function POST(request: NextRequest) {
         type: media.type,
         url: media.url,
         title: media.title,
+        createdAt: media.createdAt,
       },
     });
 
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('Gallery upload error:', error);
     return NextResponse.json(
       { error: 'Upload failed' },
       { status: 500 }

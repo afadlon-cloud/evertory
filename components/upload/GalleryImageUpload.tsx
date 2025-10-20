@@ -3,79 +3,94 @@
 import { useState, useRef } from 'react';
 import { PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
-interface ImageUploadProps {
-  storyId: string;
-  chapterId?: string;
-  onUploadComplete?: (media: any) => void;
+interface GalleryImageUploadProps {
+  onUploadSuccess?: (media: any[]) => void;
   className?: string;
 }
 
-export function ImageUpload({ 
-  storyId, 
-  chapterId, 
-  onUploadComplete, 
+export function GalleryImageUpload({ 
+  onUploadSuccess, 
   className = '' 
-}: ImageUploadProps) {
+}: GalleryImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = async (files: FileList) => {
     if (files.length === 0) return;
 
-    const file = files[0];
+    // Convert FileList to Array and validate all files
+    const fileArray = Array.from(files);
+    const validFiles = [];
     
-    // Validate file type
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      setError('Please select an image or video file');
-      return;
-    }
+    for (const file of fileArray) {
+      // Validate file type
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        setError(`${file.name}: Please select an image or video file`);
+        return;
+      }
 
-    // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File size must be less than 10MB');
-      return;
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        setError(`${file.name}: File size must be less than 10MB`);
+        return;
+      }
+      
+      validFiles.push(file);
     }
 
     setIsUploading(true);
     setError(null);
     setUploadProgress(0);
+    setUploadedCount(0);
+    setTotalFiles(validFiles.length);
+
+    const uploadedMedia = [];
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('storyId', storyId);
-      if (chapterId) {
-        formData.append('chapterId', chapterId);
-      }
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        // Don't include storyId for gallery uploads
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+        const response = await fetch('/api/upload-gallery', {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (response.status === 403 && errorData.error?.includes('Photo limit reached')) {
-          throw new Error(`Photo limit reached! You've used ${errorData.photoCount} of ${errorData.photoLimit} photos. Please upgrade your plan to upload more photos.`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (response.status === 403 && errorData.error?.includes('Photo limit reached')) {
+            throw new Error(`Photo limit reached! You've used ${errorData.photoCount} of ${errorData.photoLimit} photos. Please upgrade your plan to upload more photos.`);
+          }
+          throw new Error(`${file.name}: ${errorData.error || 'Upload failed'}`);
         }
-        throw new Error(errorData.error || 'Upload failed');
-      }
 
-      const data = await response.json();
+        const data = await response.json();
+        uploadedMedia.push(data.media);
+        
+        // Update progress
+        const completed = i + 1;
+        setUploadedCount(completed);
+        setUploadProgress((completed / validFiles.length) * 100);
+      }
       
-      if (onUploadComplete) {
-        onUploadComplete(data.media);
+      if (onUploadSuccess) {
+        onUploadSuccess(uploadedMedia);
       }
-
-      setUploadProgress(100);
       
       // Reset after success
       setTimeout(() => {
         setIsUploading(false);
         setUploadProgress(0);
+        setUploadedCount(0);
+        setTotalFiles(0);
       }, 1000);
 
     } catch (error) {
@@ -83,6 +98,8 @@ export function ImageUpload({
       setError(error instanceof Error ? error.message : 'Upload failed');
       setIsUploading(false);
       setUploadProgress(0);
+      setUploadedCount(0);
+      setTotalFiles(0);
     }
   };
 
@@ -122,6 +139,7 @@ export function ImageUpload({
         ref={fileInputRef}
         type="file"
         accept="image/*,video/*"
+        multiple
         onChange={handleInputChange}
         className="hidden"
       />
@@ -145,13 +163,18 @@ export function ImageUpload({
           <div className="space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
             <div className="space-y-2">
-              <p className="text-sm text-neutral-600">Uploading...</p>
+              <p className="text-sm text-neutral-600">
+                Uploading to your gallery... ({uploadedCount}/{totalFiles})
+              </p>
               <div className="w-full bg-neutral-200 rounded-full h-2">
                 <div 
                   className="bg-primary-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 ></div>
               </div>
+              <p className="text-xs text-neutral-500">
+                {Math.round(uploadProgress)}% complete
+              </p>
             </div>
           </div>
         ) : (
@@ -159,10 +182,13 @@ export function ImageUpload({
             <PhotoIcon className="h-12 w-12 text-neutral-400 mx-auto" />
             <div>
               <p className="text-lg font-medium text-neutral-700">
-                Drop images here, or click to select
+                Add photos to your gallery
               </p>
               <p className="text-sm text-neutral-500 mt-1">
-                Supports JPG, PNG, GIF, MP4 (max 10MB)
+                Drop multiple images here, or click to select • JPG, PNG, GIF, MP4 (max 10MB each)
+              </p>
+              <p className="text-xs text-neutral-400 mt-2">
+                Select multiple files to upload them all at once
               </p>
             </div>
           </div>

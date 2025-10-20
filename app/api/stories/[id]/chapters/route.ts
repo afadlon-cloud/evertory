@@ -36,11 +36,8 @@ export async function POST(
         order: order ?? 0,
         storyId: params.id,
       },
-      include: {
-        media: {
-          orderBy: { order: 'asc' },
-        },
-      },
+      // Note: mediaReferences will be empty for new chapters
+      // They can be added later via the media linking API
     });
 
     return NextResponse.json(chapter);

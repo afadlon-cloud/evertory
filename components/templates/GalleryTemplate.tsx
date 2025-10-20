@@ -5,6 +5,12 @@ import { motion } from 'framer-motion';
 import Masonry from 'react-masonry-css';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
+interface MediaReference {
+  id: string;
+  order: number;
+  media: Media;
+}
+
 interface Story {
   id: string;
   title: string;
@@ -12,7 +18,7 @@ interface Story {
   description?: string;
   template: string;
   chapters: Chapter[];
-  media: Media[];
+  mediaReferences: MediaReference[];
   settings: StorySettings;
 }
 
@@ -22,7 +28,7 @@ interface Chapter {
   content?: string;
   date?: string;
   order: number;
-  media: Media[];
+  mediaReferences: MediaReference[];
 }
 
 interface Media {
@@ -32,7 +38,6 @@ interface Media {
   thumbnailUrl?: string;
   title?: string;
   description?: string;
-  order: number;
 }
 
 interface StorySettings {
@@ -52,11 +57,11 @@ export function GalleryTemplate({ story }: GalleryTemplateProps) {
   const [selectedImage, setSelectedImage] = useState<Media | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Collect all media from chapters and story
-  const allMedia = [
-    ...story.media,
-    ...story.chapters.flatMap(chapter => chapter.media)
-  ].sort((a, b) => a.order - b.order);
+  // For Gallery template, only use story-level media (no chapters)
+  const allMediaWithOrder = story.mediaReferences.map(ref => ({ media: ref.media, order: ref.order }))
+    .sort((a, b) => a.order - b.order);
+  
+  const allMedia = allMediaWithOrder.map(item => item.media);
 
   const breakpointColumnsObj = {
     default: 4,
@@ -138,52 +143,6 @@ export function GalleryTemplate({ story }: GalleryTemplateProps) {
           </div>
         )}
 
-        {/* Chapter Sections */}
-        {story.chapters.length > 0 && (
-          <div className="mt-24 space-y-16">
-            <h2 className={`text-3xl font-bold text-center text-neutral-800 ${
-              story.settings.fontFamily === 'serif' ? 'font-serif' : ''
-            }`}>
-              Our Story
-            </h2>
-            
-            {story.chapters.map((chapter, index) => (
-              <motion.div
-                key={chapter.id}
-                className="max-w-4xl mx-auto"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <div className="text-center mb-8">
-                  <h3 className={`text-2xl font-bold text-neutral-800 mb-4 ${
-                    story.settings.fontFamily === 'serif' ? 'font-serif' : ''
-                  }`}>
-                    {chapter.title}
-                  </h3>
-                  
-                  {chapter.date && (
-                    <p className="text-neutral-500 text-sm">
-                      {new Date(chapter.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  )}
-                </div>
-
-                {chapter.content && (
-                  <div 
-                    className="prose prose-lg max-w-none text-neutral-700 leading-relaxed text-center"
-                    dangerouslySetInnerHTML={{ __html: chapter.content }}
-                  />
-                )}
-              </motion.div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Lightbox */}

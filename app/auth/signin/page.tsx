@@ -42,33 +42,35 @@ function SignInForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
       <div className="max-w-md w-full">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-2">
-            <HeartIcon className="h-8 w-8 text-primary-500" />
-            <span className="text-2xl font-bold text-neutral-800">Evertory</span>
+        <div className="text-center mb-12">
+          <Link href="/" className="inline-flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center">
+              <HeartIcon className="h-7 w-7 text-white" />
+            </div>
+            <span className="text-3xl font-light text-gray-900 tracking-tight">Evertory</span>
           </Link>
-          <h1 className="mt-4 text-3xl font-bold text-neutral-800 font-serif">
+          <h1 className="mt-8 text-4xl font-light text-gray-900 tracking-tight">
             Welcome Back
           </h1>
-          <p className="mt-2 text-neutral-600">
+          <p className="mt-4 text-lg text-gray-600">
             Sign in to continue your story
           </p>
         </div>
 
         {/* Sign In Form */}
-        <div className="card">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white p-10 rounded-2xl border border-gray-100 shadow-sm">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-                {error}
+              <div className="bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-2xl">
+                <p className="text-sm font-medium">{error}</p>
               </div>
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-3 uppercase tracking-wide">
                 Email Address
               </label>
               <input
@@ -76,14 +78,14 @@ function SignInForm() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input"
+                className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-200 text-lg"
                 placeholder="Enter your email"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-3 uppercase tracking-wide">
                 Password
               </label>
               <div className="relative">
@@ -92,14 +94,14 @@ function SignInForm() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input pr-12"
+                  className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-200 text-lg pr-12"
                   placeholder="Enter your password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400 hover:text-neutral-600"
+                  className="absolute inset-y-0 right-0 flex items-center pr-6 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="h-5 w-5" />
@@ -113,7 +115,7 @@ function SignInForm() {
             <div className="flex items-center justify-between">
               <Link 
                 href="/auth/forgot-password" 
-                className="text-sm text-primary-600 hover:text-primary-500"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
               >
                 Forgot your password?
               </Link>
@@ -122,16 +124,16 @@ function SignInForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 rounded-full font-medium text-sm uppercase tracking-wide shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-neutral-600">
+          <div className="mt-8 text-center">
+            <p className="text-gray-600">
               Don't have an account?{' '}
-              <Link href="/auth/signup" className="text-primary-600 hover:text-primary-500 font-medium">
+              <Link href="/auth/signup" className="text-gray-900 hover:text-gray-700 font-medium">
                 Sign up
               </Link>
             </p>
@@ -139,14 +141,14 @@ function SignInForm() {
         </div>
 
         {/* Demo Account */}
-        <div className="mt-6 text-center">
-            <p className="text-sm text-neutral-500 mb-2">Try the demo:</p>
+        <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500 mb-3 font-medium">Try the demo:</p>
             <button
               onClick={() => {
                 setEmail('demo@evertory.com');
                 setPassword('demo123');
               }}
-              className="text-sm text-primary-600 hover:text-primary-500"
+              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
             >
               Use demo account
             </button>
@@ -158,7 +160,7 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50 flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-gray-900"></div></div>}>
       <SignInForm />
     </Suspense>
   );
