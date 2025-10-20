@@ -30,7 +30,7 @@ export async function DELETE(
     }
 
     // Verify the story belongs to the user
-    if (mediaReference.story.userId !== session.user.id) {
+    if (!mediaReference.story || mediaReference.story.userId !== session.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
