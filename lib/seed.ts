@@ -22,10 +22,8 @@ async function main() {
   console.log('✅ Created demo user');
 
   // Create demo story
-  const demoStory = await prisma.story.upsert({
-    where: { slug: 'our-family-journey' },
-    update: {},
-    create: {
+  const demoStory = await prisma.story.create({
+    data: {
       title: 'Our Family Journey',
       subtitle: 'A story of love, growth, and precious memories',
       description: 'Welcome to our family\'s digital memory book. Here you\'ll find the moments that matter most to us, from everyday adventures to milestone celebrations.',
@@ -68,15 +66,8 @@ async function main() {
   ];
 
   for (const chapterData of chapters) {
-    await prisma.chapter.upsert({
-      where: { 
-        storyId_order: {
-          storyId: demoStory.id,
-          order: chapterData.order,
-        }
-      },
-      update: {},
-      create: {
+    await prisma.chapter.create({
+      data: {
         ...chapterData,
         storyId: demoStory.id,
       },
@@ -125,7 +116,7 @@ async function main() {
     await prisma.media.create({
       data: {
         ...mediaData,
-        storyId: demoStory.id,
+        userId: demoUser.id,
       },
     });
   }
@@ -133,10 +124,8 @@ async function main() {
   console.log('✅ Created demo media');
 
   // Create story settings
-  await prisma.storySettings.upsert({
-    where: { storyId: demoStory.id },
-    update: {},
-    create: {
+  await prisma.storySettings.create({
+    data: {
       storyId: demoStory.id,
       primaryColor: '#df8548',
       fontFamily: 'serif',
